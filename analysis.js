@@ -21,9 +21,26 @@ function main()
 		builder.report();
 	}
 
+	//esprima.parse(program);
+
 }
 
+function counter(node){
+	ifStatement = false;
+	var num = 0;
 
+	traverseWithParents(node, function (node){
+		if (node.type === "IfStatement") ifStatement = true;
+		if (node.type === "LogicalExpression" && (node.operator === "&&" || node.operator === "||"))
+			num++;
+	});
+
+	if (num === 0 && ifStatement){
+		return 1
+	}
+
+	return num;
+}
 
 var builders = {};
 
@@ -106,23 +123,39 @@ function complexity(filePath)
 
 	var i = 0;
 
+	var strCount = (JSON.stringify(ast).match(/Literal/g) || []).length;
+
 	// A file level-builder:
 	var fileBuilder = new FileBuilder();
 	fileBuilder.FileName = filePath;
 	fileBuilder.ImportCount = 0;
 	builders[filePath] = fileBuilder;
 
+	fileBuilder.Strings = strCount;
+
 	// Tranverse program with a function visitor.
 	traverseWithParents(ast, function (node) 
 	{
-		if (node.type === 'FunctionDeclaration') 
-		{
+		if (node.type === 'FunctionDeclaration') {
+			var num = 0;
 			var builder = new FunctionBuilder();
+			builder.ParameterCount = node.params.length
+			
+			traverseWithParents(node, function (node) {
+				if (isDecision(node)) {
+					builder.SimpleCyclomaticComplexity += 1;
+
+					if (counter(node) > num) {
+						num = counter(node);
+					}
+				}
+			});
 
 			builder.FunctionName = functionName(node);
 			builder.StartLine    = node.loc.start.line;
-
 			builders[builder.FunctionName] = builder;
+			builder.SimpleCyclomaticComplexity += 1
+			builder.MaxConditions = num;
 		}
 
 	});
