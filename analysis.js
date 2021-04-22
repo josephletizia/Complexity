@@ -132,6 +132,7 @@ function complexity(filePath)
 	builders[filePath] = fileBuilder;
 
 	fileBuilder.Strings = strCount;
+	exports.getStrings = () => fileBuilder.Strings;
 
 	// Tranverse program with a function visitor.
 	traverseWithParents(ast, function (node) 
@@ -308,4 +309,6 @@ remainder.toString() + " seconds";
 mints.toString().split(".")[0] + " " + szmin;
       }
   }
- exports.complexity = complexity;
+ const _complexity = complexity;
+const __complexity = complexity;
+exports.complexity = complexity;
